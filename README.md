@@ -7,15 +7,14 @@ text messages and estimates whether they are legitimate, spam, or potentially
 scammy — then explains *why*. No paid APIs, no GPU, no cloud, no tracking.
 An educational ML project, not a production security product.
 
-## Screenshots (legacy Streamlit UI)
+## Screenshots (TypeScript UI)
 
-The shots below show the legacy `streamlit run app.py` interface. The
-recommended TypeScript UI (`python api.py`) covers the same pages —
-Overview, Analyzer, Evaluation, Methodology, Privacy — with a redesigned layout.
+![Overview](docs/screenshots/ui-overview.png)
+![Message Analyzer with a phishing-style result](docs/screenshots/ui-analyzer.png)
+![Model Evaluation](docs/screenshots/ui-evaluation.png)
 
-![Dashboard](docs/screenshots/dashboard.png)
-![Message Analyzer with a phishing-style result](docs/screenshots/analyzer-result.png)
-![Model Evaluation](docs/screenshots/evaluation.png)
+Legacy Streamlit shots (`dashboard.png`, `analyzer-result.png`, `evaluation.png`)
+remain in `docs/screenshots/` for reference.
 
 ## Features
 
