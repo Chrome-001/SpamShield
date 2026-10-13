@@ -6,6 +6,6 @@ streamlit==1.65.0
 matplotlib==3.11.2
 pytest==9.1.1
 scipy==1.18.1
-fastapi==0.121.0
-uvicorn==0.37.0
-httpx==1.0.2
+fastapi==0.143.0
+uvicorn==0.54.0
+httpx==0.28.1
