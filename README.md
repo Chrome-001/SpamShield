@@ -7,7 +7,11 @@ text messages and estimates whether they are legitimate, spam, or potentially
 scammy — then explains *why*. No paid APIs, no GPU, no cloud, no tracking.
 An educational ML project, not a production security product.
 
-## Screenshots
+## Screenshots (legacy Streamlit UI)
+
+The shots below show the legacy `streamlit run app.py` interface. The
+recommended TypeScript UI (`python api.py`) covers the same pages —
+Overview, Analyzer, Evaluation, Methodology, Privacy — with a redesigned layout.
 
 ![Dashboard](docs/screenshots/dashboard.png)
 ![Message Analyzer with a phishing-style result](docs/screenshots/analyzer-result.png)
@@ -20,7 +24,9 @@ An educational ML project, not a production security product.
   rule-based risk indicators, plain-language explanation, heuristic advisory level
 - Transparent rule warnings (suspicious URLs, OTP/password requests, prize lures,
   urgency, impersonation…) — independent of the model, never replacing it
-- Streamlit dashboard: Analyzer, Evaluation (real metrics only), About, Privacy
+- Professional TypeScript + React UI (Overview, Analyzer with verdict banner
+  and probability bars, Evaluation tables, Methodology, Privacy) served by a
+  local FastAPI backend; Streamlit `app.py` kept as a legacy alternative
 - Reproducible training with stratified split, timing + memory reporting
 - Confusion matrix, per-class metrics, error analysis, model comparison report
 - pytest suite covering validation, rules, privacy (no message logging)
@@ -29,14 +35,17 @@ An educational ML project, not a production security product.
 
 ```mermaid
 flowchart LR
-    CSV[data/messages.csv] --> DS[dataset.py\nvalidate + split]
+    CSV[data/sample_messages.csv] --> DS[dataset.py\nvalidate + split]
     DS --> TR[train.py\nTF-IDF + LogReg/NB]
     TR --> M[models/*.joblib]
     TR --> R[reports/evaluation.json\nconfusion_matrix.png]
     M --> P[predictor.py\nanalyze_message]
     RULES[rules.py\nindicators] --> P
-    P --> UI[app.py Streamlit\nAnalyzer/Dashboard/Eval]
-    R --> UI
+    P --> API[api.py FastAPI\n/status /analyze /evaluation]
+    R --> API
+    API --> UI[frontend/ TypeScript + React\nOverview/Analyzer/Eval]
+    P --> LEGACY[app.py Streamlit\nlegacy UI]
+    R --> LEGACY
 ```
 
 ## Technology stack
@@ -89,6 +98,8 @@ Saves `models/spamshield_model.joblib`, `models/model_metadata.json`,
 regenerated locally). Inference afterwards needs **no internet**.
 
 ## Running the app (recommended: TypeScript UI + FastAPI)
+
+Requires Python 3.11+ and Node.js 18+ (Vite 5; verified on Node 20).
 
 ```bash
 pip install -r requirements.txt
@@ -144,13 +155,16 @@ tiny synthetic data. See `reports/evaluation.json` and
 | message | model | advisory |
 |---|---|---|
 | "Hey, are we still meeting for lunch tomorrow?" | ham | low |
-| "WINNER! claim your $1000 prize now!" | spam | elevated |
+| "WINNER! claim your $1000 prize now!" | spam | caution |
 | "URGENT: account suspended, verify at http://bit.ly/x with password" | spam + indicators | elevated |
+
+*(Verified against the live API: the prize lure triggers one rule hit, so the
+heuristic lands on `caution` — `elevated` needs spam plus 2+ indicators.)*
 
 ## Privacy and security
 
 - All inference local; zero network calls; no uploads; session-only history.
-- Logs never contain message contents; 5000-char input cap; uploads validated.
+- Logs never contain message contents; 5000-char input cap.
 - ⚠️ `joblib` files are pickle-based — only load models you trained or trust.
 
 ## Known limitations
