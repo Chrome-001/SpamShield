@@ -41,7 +41,8 @@ flowchart LR
 
 ## Technology stack
 
-Python 3.11+ · scikit-learn · pandas · NumPy · joblib · Streamlit · Matplotlib · pytest.
+Python 3.11+ · scikit-learn · pandas · NumPy · joblib · FastAPI + **TypeScript + React + Vite**
+(Streamlit `app.py` kept as legacy) · Matplotlib · pytest.
 No TensorFlow/PyTorch/LLMs, no databases, no external services.
 
 ## Hardware requirements
@@ -87,7 +88,26 @@ Saves `models/spamshield_model.joblib`, `models/model_metadata.json`,
 `reports/evaluation.json`, `reports/confusion_matrix.png` (git-ignored,
 regenerated locally). Inference afterwards needs **no internet**.
 
-## Running the app
+## Running the app (recommended: TypeScript UI + FastAPI)
+
+```bash
+pip install -r requirements.txt
+python train.py --data data/sample_messages.csv   # once, generates local model + reports
+cd frontend && npm install && npm run build && cd ..
+python api.py                                     # -> http://127.0.0.1:8000
+```
+
+Dev mode with hot reload:
+
+```bash
+python api.py                                     # terminal 1 (API on :8000)
+cd frontend && npm install && npm run dev         # terminal 2 (UI on :5173, proxies /api)
+```
+
+API endpoints: `GET /api/health`, `GET /api/status`, `POST /api/analyze {"text": "..."}`,
+`GET /api/evaluation`, `GET /api/confusion-matrix`. The built UI is served from `/` by `api.py`.
+
+## Running the legacy Streamlit UI
 
 ```powershell
 streamlit run app.py

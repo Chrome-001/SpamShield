@@ -16,3 +16,7 @@ __pycache__/
 !.streamlit/config.toml
 .DS_Store
 Thumbs.db
+
+# TypeScript frontend (Vite)
+frontend/node_modules/
+frontend/dist/
