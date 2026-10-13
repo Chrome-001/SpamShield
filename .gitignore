@@ -1,0 +1,18 @@
+# Trained models & reports are generated locally — never commit them.
+models/*.joblib
+models/model_metadata.json
+reports/*.json
+reports/*.png
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+*.egg-info/
+
+# Streamlit / OS (keep config.toml so telemetry stays off everywhere, incl. cloud)
+.streamlit/*
+!.streamlit/config.toml
+.DS_Store
+Thumbs.db
