@@ -36,7 +36,12 @@ h1, h2, h3 { color: #f2f5fa; }
 .small { color:#9fb0cc; font-size:0.9em; }
 [data-testid="stMetricValue"] { color: #f2f5fa; }
 [data-testid="stMetricLabel"] { color: #9fb0cc; }
-.stButton > button { border-radius: 10px; font-weight: 600; }
+.stButton > button { border-radius: 10px; font-weight: 600; color: #0e1526; }
+.stButton > button[kind="primary"] { color: #ffffff; }
+.stButton > button:hover { color: #0e1526; }
+.stButton > button[kind="primary"]:hover { color: #ffffff; }
+.prob-row { margin: 2px 0 10px 0; }
+.prob-label { font-size: 0.9em; color: #cbd5e1; margin-bottom: 2px; }
 </style>
 """
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
@@ -71,7 +76,12 @@ def show_result(result: dict):
     probs = result.get("probabilities") or {}
     if probs:
         st.write("**Probability breakdown:**")
-        st.bar_chart(probs)
+        for label, p in sorted(probs.items(), key=lambda kv: kv[1], reverse=True):
+            st.markdown(
+                f"<div class='prob-label'>{html.escape(label)} — {p:.0%}</div>",
+                unsafe_allow_html=True,
+            )
+            st.progress(min(max(float(p), 0.0), 1.0))
     st.markdown(
         f"<div class='card risk-{html.escape(str(result.get('advisory_level', 'unknown')))}'>"
         f"<b>Advisory: {html.escape(str(result.get('advisory_level', 'unknown')).title())}</b><br>"
@@ -108,6 +118,8 @@ if page == "Dashboard":
     st.caption("Detect suspicious messages. Understand the warning signs.")
     from spamshield.predictor import model_status
     status = model_status()
+    trained_raw = str(status.get("trained_at", "?"))
+    trained_short = trained_raw[:16].replace("T", " ") + " UTC" if "T" in trained_raw else trained_raw
     c1, c2, c3 = st.columns(3)
     c1.metric("Model status", "Ready ✅" if status["available"] else "Not trained ⚠️")
     c2.metric("Model version", status.get("version", "unknown"))
@@ -116,11 +128,18 @@ if page == "Dashboard":
         st.info("No trained model found. Train one with: `python train.py --data data/sample_messages.csv`")
     else:
         st.write(f"**Classifier:** {status.get('model_type', '?')} · **Labels:** {', '.join(status.get('labels', [])) or '?'} "
-                 f"· **Trained:** {status.get('trained_at', '?')}")
+                 f"· **Trained:** {trained_short}")
     st.subheader("Latest analyses this session")
     if st.session_state.history:
-        for h in reversed(st.session_state.history[-5:]):
-            st.write(f"- `{h['prediction']}` ({h.get('advisory_level', '?')}) — {h['preview']}")
+        import pandas as pd
+
+        st.dataframe(
+            pd.DataFrame(reversed(st.session_state.history[-5:]))[
+                ["prediction", "advisory_level", "preview"]
+            ],
+            width="stretch",
+            hide_index=True,
+        )
     else:
         st.write("No messages analyzed yet this session. Go to **Message Analyzer** to start.")
     st.info("🔒 Privacy: all analysis runs locally in this app. Messages are never uploaded, "
@@ -135,13 +154,13 @@ elif page == "Message Analyzer":
         st.session_state.msg = ""
     col_ex = st.columns(len(EXAMPLES))
     for (name, txt), col in zip(EXAMPLES.items(), col_ex):
-        if col.button(name, use_container_width=True):
+        if col.button(name, width="stretch"):
             st.session_state.msg = txt
             st.rerun()
     text = st.text_area("Paste a message to analyze", key="msg", height=160, max_chars=5000)
     b1, b2 = st.columns([1, 1])
-    analyze = b1.button("🔍 Analyze", type="primary", use_container_width=True)
-    if b2.button("🧹 Clear", use_container_width=True):
+    analyze = b1.button("🔍 Analyze", type="primary", width="stretch")
+    if b2.button("🧹 Clear", width="stretch"):
         st.session_state.msg = ""
         st.rerun()
     if analyze:
@@ -164,7 +183,6 @@ elif page == "Model Evaluation":
     if ev is None:
         st.warning("No evaluation report found. Generate one by running:\n\n`python train.py --data data/sample_messages.csv`")
     else:
-        meta = ev.get("metadata", {})
         c1, c2, c3, c4 = st.columns(4)
         c1.metric("Accuracy", f"{ev['accuracy']:.3f}")
         c2.metric("Precision (macro)", f"{ev['precision_macro']:.3f}")
@@ -174,11 +192,20 @@ elif page == "Model Evaluation":
                    f"(train: {ev.get('n_train', '?')}) · ~{ev.get('inference_latency_ms_per_message', '?')} ms/message. "
                    "Accuracy alone is insufficient with imbalanced classes — compare per-class precision/recall/F1 below.")
         st.subheader("Per-class metrics")
-        st.table({k: {m: round(v, 3) if isinstance(v, float) else v for m, v in d.items()}
-                  for k, d in ev.get("per_class", {}).items()})
+        import pandas as pd
+
+        per_class = ev.get("per_class", {})
+        df_metrics = pd.DataFrame(per_class).T.reset_index(names="class")
+        if "support" in df_metrics.columns:
+            df_metrics["support"] = df_metrics["support"].astype(int)
+        st.dataframe(
+            df_metrics.style.format({c: "{:.3f}" for c in ("precision", "recall", "f1")}),
+            width="stretch",
+            hide_index=True,
+        )
         st.subheader("Confusion matrix")
         if CM_PATH.exists():
-            st.image(str(CM_PATH))
+            st.image(str(CM_PATH), width=520)
         else:
             st.write(f"Raw counts: {ev.get('confusion_matrix')}")
         with st.expander("Error analysis (false positives / false negatives)"):
@@ -191,7 +218,25 @@ elif page == "Model Evaluation":
         cmp_path = BASE_DIR / "reports" / "model_comparison.json"
         if cmp_path.exists():
             st.subheader("Logistic Regression vs Naive Bayes")
-            st.json(json.loads(cmp_path.read_text(encoding="utf-8")))
+            cmp = json.loads(cmp_path.read_text(encoding="utf-8"))
+            rows = {k: v for k, v in cmp.items() if isinstance(v, dict)}
+            st.dataframe(
+                pd.DataFrame(rows).T.reset_index(names="model").style.format(
+                    {c: "{:.3f}" for c in ("accuracy", "precision_macro", "recall_macro", "f1_macro", "f1_weighted")},
+                    na_rep="—",
+                ),
+                width="stretch",
+                hide_index=True,
+            )
+            for model_name, vals in rows.items():
+                f1 = vals.get("f1_macro")
+                if isinstance(f1, (int, float)):
+                    st.markdown(
+                        f"<div class='prob-label'>{html.escape(model_name)} — F1 {f1:.3f}</div>",
+                        unsafe_allow_html=True,
+                    )
+                    st.progress(min(max(float(f1), 0.0), 1.0))
+            st.caption(cmp.get("note", ""))
 
 elif page == "About":
     st.title("📘 About SpamShield")
