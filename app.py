@@ -20,28 +20,22 @@ st.set_page_config(page_title="SpamShield", page_icon="🛡️", layout="wide")
 
 CUSTOM_CSS = """
 <style>
-.stApp { background: #0e1526; color: #e8edf5; }
-section[data-testid="stSidebar"] { background: #131c33; }
-h1, h2, h3 { color: #f2f5fa; }
-.stTextArea textarea { background: #1a2440; color: #f2f5fa; border-radius: 10px; }
+/* Structural polish only. No global background/text colors are set here, so
+   both dark and light modes stay readable. Accent components below carry
+   their OWN background AND text colors, rendering identically either way. */
+.stButton > button { border-radius: 10px; font-weight: 600; }
 .badge { display:inline-block; padding:6px 14px; border-radius:999px; font-weight:700; }
 .badge-ham { background:#123d2b; color:#4ade80; border:1px solid #22c55e; }
 .badge-spam { background:#40260f; color:#fbbf24; border:1px solid #f59e0b; }
 .badge-scam { background:#421418; color:#f87171; border:1px solid #ef4444; }
 .badge-unknown { background:#2a3350; color:#cbd5e1; border:1px solid #64748b; }
-.card { background:#16203a; border:1px solid #2b3a5f; border-radius:12px; padding:16px 18px; margin:10px 0; }
+.card { background:#16203a; border:1px solid #2b3a5f; color:#e8edf5;
+        border-radius:12px; padding:16px 18px; margin:10px 0; }
 .risk-low { border-left:6px solid #22c55e; }
 .risk-caution { border-left:6px solid #f59e0b; }
 .risk-elevated { border-left:6px solid #ef4444; }
-.small { color:#9fb0cc; font-size:0.9em; }
-[data-testid="stMetricValue"] { color: #f2f5fa; }
-[data-testid="stMetricLabel"] { color: #9fb0cc; }
-.stButton > button { border-radius: 10px; font-weight: 600; color: #0e1526; }
-.stButton > button[kind="primary"] { color: #ffffff; }
-.stButton > button:hover { color: #0e1526; }
-.stButton > button[kind="primary"]:hover { color: #ffffff; }
 .prob-row { margin: 2px 0 10px 0; }
-.prob-label { font-size: 0.9em; color: #cbd5e1; margin-bottom: 2px; }
+.prob-label { font-size: 0.9em; margin-bottom: 2px; }
 </style>
 """
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)

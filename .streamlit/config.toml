@@ -3,3 +3,13 @@ gatherUsageStats = false
 
 [server]
 headless = true
+
+# SpamShield's default look: dark navy dashboard. Users can still switch to
+# light mode in the app menu — all custom components carry their own colors,
+# so both modes stay readable (see CUSTOM_CSS in app.py).
+[theme]
+base = "dark"
+primaryColor = "#ef4444"
+backgroundColor = "#0e1526"
+secondaryBackgroundColor = "#131c33"
+textColor = "#e8edf5"
